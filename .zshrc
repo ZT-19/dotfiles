@@ -1,48 +1,83 @@
-# script that runs when zsh shell is started and does the following:
-# 1. configures shell session
-# 2. sets environment variables
-# 3. defines shell functions
+### GENERAL ### 
+# configures shell session, sets env variables, and define any shell functions
 
-PROMPT='%~ %# '
+## show branch in prompt ##
+parse_git_branch() {
+    git branch 2> /dev/null | sed -n -e 's/^\* \(.*\)/[\1]/p'
+}
 
-# Created by `pipx` on 2024-06-04 18:27:52
-export PATH="$PATH:/Users/ztu/.local/bin"
-export PYENV_ROOT="$HOME/.pyenv"
-command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+COLOR_PINK='%F{211}'
+COLOR_BLUE='%F{81}'
+COLOR_WHITE='%F{15}'
+COLOR_DEF='%f'
 
-# Configurations from "How To - Bash vs zshrc", "How To - pyenv", and "Connecting to AWS with CMTAWS" Docs
-export LDFLAGS="-L/usr/local/opt/zlib/lib -L/usr/local/opt/bzip2/lib"
-export CPPFLAGS="-I/usr/local/opt/zlib/include -I/usr/local/opt/bzip2/include"
-export PKG_CONFIG_PATH="/usr/local/opt/zlib/lib/pkgconfig"
+setopt PROMPT_SUBST
+export PROMPT='${COLOR_PINK}%~ ${COLOR_WHITE}$(parse_git_branch)${COLOR_BLUE} %% '
+##
 
-eval "$(pyenv init --path)" # 
-eval "$(pyenv init -)" # Configures terminal to respect shims that penv installs
+# (old) prompt without branch
+#PROMPT='%~ %# ' 
 
-export CMT_HOME=~/cmt # Tells various CMT tools where ~/cmt lives, in case its in a nonstandard location
+# aliases for common git commands
 
-export CMT_USER=ztu # Explicitly define user in environment variables
+alias ll='ls -la'
+alias ga='git add .'
+alias gb='git branch'
+alias gc='git commit'
+alias gd='git diff'
+alias gpull='git pull'
+alias gpush='git push'
+alias gs='git status'
 
+# better directory navigation
+setopt AUTO_CD              # just type directory name to cd into it
+#setopt AUTO_PUSHD          # make cd push old directory onto stack
+#setopt PUSHD_IGNORE_DUPS   # don't push duplicate directories
+#setopt PUSHD_MINUS         # make 'cd -' work
+
+# helpful exports
 export LANG=en_US.UTF-8 # Sets zsh to use UTF-8 encoding
+export PATH=/opt/homebrew/bin:$PATH
+export PATH=/Users/ztu/.local/bin:$PATH # adds ~/.local/bin to $PATH, to allow tools installed w/ pipx to be used.
+export PATH="/opt/homebrew/Cellar/gcc/14.2.0_1/bin:$PATH"
 
-export PATH=/Users/ztu/.local/bin:$PATH # adds ~/.local/bin to your $PATH, which allows tools installed via pipx to be used.
+# color support for ls and grep
+export CLICOLOR=1
+export LSCOLORS=ExFxBxDxCxegedabagacad
+alias grep='grep --color=auto'
 
-# Specifies importing so that Python code imports properly; possibly unnecessary (2/28/2024)
-# NOTE: does this conflict with PYENV_ROOT?
-export PYTHONPATH=/Users/ztu/cmt/vtrack:/Users/ztu/cmt/vtrack/mm:/Users/ztu/cmt/vtrack/lib:/Users/ztu/cmt:/Users/ztu/cmt/vtrack/appserver:/Users/ztu/cmt/vtrack/base
+###
 
-# plugins
-plugins=( 
-    # Oh My Zsh: auto complete for shell (zsh)
-    zsh-autosuggestions
-)
+### CUSTOM SHELL FUNCTIONS ###
 
-# zsh-autosuggestions: another auto complete tool for zsh (not sure if this conflicts with Oh My Zsh
+function mkcd() {
+    [[ -z "$1" ]] && echo "Usage: mkcd <directory>" && return 1
+    mkdir -p "$1" && cd "$1"
+}
 
+
+###
+
+### AUTO COMPLETE ###
+
+# zsh auto suggestions
+    # accept suggestion with (rightarrow) or (ctrl + e)
+    # clear recommendation history with: rm ~/.zsh_history && source ~/.zshrc
 source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-export DOCKER_DEFAULT_PLATFORM=linux/amd64
 
+# autocomplete history settings
+HISTSIZE=10000
+SAVEHIST=10000
+HISTFILE=~/.zsh_history
+setopt SHARE_HISTORY          # share history between sessions
+setopt HIST_IGNORE_ALL_DUPS   # don't record duplicate commands
+setopt HIST_REDUCE_BLANKS     # remove superfluous blanks from history
 
-export NVM_DIR="$HOME/.nvm"
-  [ -s "/usr/local/opt/nvm/nvm.sh" ] && \. "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
-  [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && \. "/usr/local/opt/nvm/etc/bash_completion.d/nvm"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+###
+
+### DOCKER ###
+alias docker-clean='docker system prune -af'  # remove unused docker data
+alias docker-stop-all='docker stop $(docker ps -q)'  # stop all running containers
+
+# use to run containers on silicon macs (m1, m2, etc) to use x86_64 arch instead of ARM
+#export DOCKER_DEFAULT_PLATFORM=linux/amd64
