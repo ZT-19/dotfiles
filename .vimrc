@@ -11,17 +11,37 @@ syntax enable " Enable syntax highlighting.
 colorscheme evening
 set wrap " Enable line wrapping
 
-set ruler "cursor position
-set title "show the windows title
+
+" display indicators
+set showmatch       " show matching brackets
+set cursorline      " highlight current line
+set colorcolumn=80  " show column guide at 80 characters
+set ruler           "cursor position
+set title           "show the windows title
 set background=dark "dark background colors
-set number "line nums
+set number          "line nums
 
 set history=1000 " Increase the undo limit
 
 set expandtab " enter spaces when tab is pressed
 set tabstop=4 " use 4 spaces to represent tab
 
-"shift tabe shortcut
+" quick pairs (auto complete pairs)
+
+inoremap { {}<left>
+inoremap ( ()<left>
+inoremap [ []<left>
+inoremap ' ''<left>
+inoremap " ""<left>
+
+" quick pairs uncomment for (double input to auto complete)
+"inoremap {{ {}<left>
+"inoremap (( ()<left>
+"inoremap [[ []<left>
+"inoremap '' ''<left>
+"inoremap "" ""<left>
+
+"shift tab shortcut
 " for command mode
 nnoremap <S-Tab> <<
 " for insert mode
